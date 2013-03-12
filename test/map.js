@@ -1,6 +1,4 @@
 var baseUrl = "http://geomess.peerates.org";
-var nodeUrl = "http://geo.mess.jit.su";
-var appName = "app01";
 var autoFitEvery=5;
 var autoFitCount=0;
 
@@ -8,14 +6,46 @@ var map;
 var markerArray = new Array();
 var latlngbounds;
 
-var faye;
+var geomess;
 
 $(document).ready(function() {
 	
 		fixConsole(false);
-		google.maps.event.addDomListener(window, 'load', initialize);
+		
+		geomess = new GeoMess("http://geo.mess.jit.su");
+		
+		geomess.on('init', function(){
+			console.log('init');
+		});
 
+		geomess.on('app-message', function(message){
+			console.log('app-message',message);
+		});
+
+		geomess.on('update-position', function(message){
+			moveMarker(message.agentid, message.lat, message.lng);
+			console.log('update-position', message);
+		});
+
+		geomess.on('app-subscription-active', function(){
+			$("#status").html("subscription active.");
+			console.log('app-subscription-active');
+		});
+
+		geomess.on('app-subscription-error', function(error){
+			$("#status").html("subscription error: "+error.message);
+			console.log('app-subscription-error',error);
+		});
+		
+		geomess.init();
+
+		google.maps.event.addDomListener(window, 'load', initialize);
 });
+
+function initialize(){
+	 setupMap();
+	 geomess.listenToApp("app01");
+}
 
 function roundNumber(rnum, rlength) {
 	return Math.round(rnum * Math.pow(10, rlength)) / Math.pow(10, rlength);
@@ -57,38 +87,6 @@ function roundNumber(rnum, rlength) {
 
 }
 
-function initialize(){
-	 setupMap();
-	 setupFaye();
-}
- 
-function setupFaye(){
-	faye = new Faye.Client(nodeUrl+'/bayeux/faye');
-	//faye.disable('websocket');
-	    
-	var subscription = faye.subscribe('/server/'+appName+'/map', function(message) {
-		
-		if(message.action=='update-position')
-			moveMarker(message.agentid, message.lat, message.lng);
-		
-		/*
-		if(message.action=='somethingElse')
-			doSomethingElse(message);
-		 */
-		
-		console.log(message);
-	});
-
-	subscription.callback(function() {
-		$("#status").html("subscription active.");
-	});
-
-	subscription.errback(function(error) {
-		alert("Error creating subscription: "+error.message);
-	});
-	
-}
- 
 function setupMap() {
 	var mapOptions = {
 		zoom: 0,
@@ -110,7 +108,7 @@ function setupMap() {
 	
 	
 	$.ajax({
-		url: baseUrl+'/services/app/'+appName+'/agents?callback=?',
+		url: baseUrl+'/services/app/app01/agents?callback=?',
 		dataType: 'jsonp'
 	}).done(function ( data ) {
 
