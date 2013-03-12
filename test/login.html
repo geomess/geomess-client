@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>Geo\Mess test login</title>
+		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+
+    	<link rel="stylesheet" type="text/css" href="style.css" />
+
+    	<script src="http://geo.mess.jit.su/bayeux/faye/client.js"></script>
+    	<script src="login.js"></script>
+
+    </head>
+
+	<body>
+
+	Username: <input type="text" id="username"/><br/>
+	Password: <input type="text" id="password"/><br/>
+	App:<input type="text" id="app"/><br/>
+	Response hash: <input type="text" id="responseHash"/><br/>
+	<input type="button" id="login" value="login"/><br/>
+	<br/>
+	Status: <input type="text" id="status"/><br/>
+	Result: <input type="text" id="result"/><br/>
+	Detail: <input type="text" id="detail"/><br/>
+	Token: <input type="text" id="token"/><br/>	
+	
+	<br/>
+	<input type="button" onclick="javascript:testSubscribeToResponseWildcard1();" value="subscribe to /api/login-response/*"/><br/>
+	<input type="button" onclick="javascript:testSubscribeToResponseWildcard2();" id="s2" value="subscribe to /api/login-response/**"/><br/>
+	<input type="button" onclick="javascript:testSubscribeToResponseWildcard3();" id="s3" value="subscribe to /api/**"/><br/>
+
+  </body>
+</html>
