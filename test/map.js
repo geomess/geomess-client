@@ -59,7 +59,7 @@ $(document).ready(function() {
 		});
 	
 		geomess.on('login-success', function(message){
-			$("#login").html("<div class=\"centered\"><br/><br/>welcome "+message.username+"!</div>");
+			$("#login").html("<div class=\"centered\"><p><br/><br/>welcome "+message.username+"!</div></p>");
 			
 			//close panel
 			setTimeout(function(){
