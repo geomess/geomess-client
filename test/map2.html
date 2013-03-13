@@ -19,10 +19,33 @@
 
 	<body>
 
-	<div id="latbox">
-	
+	  <div id="toppanel">
+	    <div id="panel">
+	      <div id="top_panel_contents" class="transparent"> </div>
+	      <img class="border_pic" src="login_image.jpg" alt="Screenshot" />
+	      <div class="border" id="login">
+	        <p>Username:
+	          <input type="text" size="15" name="username" id="username" />
+	          <br />
+	          Password:
+	          <input type="password" size="15" name="password" id="password" />
+	          <br />
+	          <input type="button" accesskey="l" id="login_btn" name="login" value="Login" />
+	        </p>
+	      </div>
+	    </div>
+	    <div class="panel_button" style="display: visible;"><span>Login</span> </div>
+	    <div class="panel_button" id="hide_button" style="display: none;"><span>Hide</span> </div>
+	  </div>
+
+	<div id="latpanel">
+		<div id="latpanel_contents" class="transparent"> </div>
 	</div>
 
+    <div id="loading">
+		<img src="loading.gif"/>
+	</div>
+	
     <div id="map_canvas"></div>
 
   </body>

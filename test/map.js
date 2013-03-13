@@ -1,60 +1,76 @@
-var baseUrl = "http://geomess.peerates.org";
 var autoFitEvery=5;
 var autoFitCount=0;
 
 var map;
-var markerArray = new Array();
-var latlngbounds;
 
 var geomess;
 
 $(document).ready(function() {
 	
+		$("div.panel_button").click(function(){
+			$("div#panel").animate({ height: "500px" }).animate({height: "400px"}, "fast");
+			$("div.panel_button").toggle();
+		});	
+		
+		$("div#hide_button").click(function(){
+			$("div#panel").animate({height: "0px"}, "fast");
+		});	
+	
+		$("#map_canvas").css({"visibility":"hidden"});
+		$("#toppanel").css({"visibility":"hidden"});
+		
 		fixConsole(false);
 		
-		geomess = new GeoMess("http://geo.mess.jit.su");
-		
-		geomess.on('init', function(){
-			console.log('init');
-		});
-
-		geomess.on('app-message', function(message){
-			console.log('app-message',message);
-		});
-
+		geomess = new GeoMessClient("http://geo.mess.jit.su");
+		geomess.setApp("app01");
+				
 		geomess.on('update-position', function(message){
 			moveMarker(message.agentid, message.lat, message.lng);
 			console.log('update-position', message);
 		});
 
+		geomess.on('update-status', function(message){
+			updateStatus(message.agentid, message.status);
+			console.log('update-status', message);
+		});
+		
+		
 		geomess.on('app-subscription-active', function(){
 			$("#status").html("subscription active.");
 			console.log('app-subscription-active');
 		});
 
-		geomess.on('app-subscription-error', function(error){
-			$("#status").html("subscription error: "+error.message);
-			console.log('app-subscription-error',error);
+		geomess.on('agents-loaded', function(){
+			
+			setupMap('map_canvas', geomess.getAgents());
+			
+			console.log('agents-loaded');
 		});
-		
-		geomess.init();
-
+	
 		google.maps.event.addDomListener(window, 'load', initialize);
 });
 
 function initialize(){
-	 setupMap();
-	 geomess.listenToApp("app01");
+	geomess.init();
+	geomess.loadAgentTypes();
+	geomess.loadAgents();
+	geomess.listenToApp();
 }
 
 function roundNumber(rnum, rlength) {
 	return Math.round(rnum * Math.pow(10, rlength)) / Math.pow(10, rlength);
 }
-  
- function moveMarker(id, latval, lngval){
+
+function updateStatus(id, status){
+	geomess.setStatus(id, status);
+	$("#status_"+id).html(status);
+}
+
+function moveMarker(id, latval, lngval){
 	var checkedVal = $('input[name=follow]').filter(':checked').val();
 	var autofit = $('#autofit').is(':checked');
 	var dofit = false;
+	var latlngbounds = null;
 	if(autofit){
 		autoFitCount++;
 		if(autoFitCount>autoFitEvery){
@@ -64,40 +80,38 @@ function roundNumber(rnum, rlength) {
 		}
 	}
 
-	for(key in markerArray){
-		if(key == id){
-			markerArray[key].setPosition(new google.maps.LatLng(parseFloat(latval), parseFloat(lngval)));
+	var marker = geomess.getMarker(id);
+	marker.setPosition(new google.maps.LatLng(parseFloat(latval), parseFloat(lngval)));
 
-			$("#lat_"+id).html(""+roundNumber(latval,6));
-			$("#lon_"+id).html(""+roundNumber(lngval,6));
+	$("#lat_"+id).html(""+roundNumber(latval,6));
+	$("#lon_"+id).html(""+roundNumber(lngval,6));
 
-			if(checkedVal == id){
-				map.panTo(markerArray[key].getPosition());
-			}
-			
-		}
-
-		if(dofit){
-			latlngbounds.extend(markerArray[key].getPosition());
-		}
+	if(checkedVal == id){
+		map.panTo(marker.getPosition());
 	}
 	
-	if(dofit)
+	if(dofit){
+		var agents = geomess.getAgents();
+		for(var idx in agents){
+			var agent = agents[idx];
+			latlngbounds.extend(agent.marker.getPosition());
+		}
 		map.fitBounds( latlngbounds );
-
+	}
+	
 }
 
-function setupMap() {
+function setupMap(mapDiv, agents) {
 	var mapOptions = {
 		zoom: 0,
 		center: new google.maps.LatLng(0, 0),
 		mapTypeId: google.maps.MapTypeId.ROADMAP
 	};
 
-	map = new google.maps.Map(document.getElementById('map_canvas'), mapOptions);
-	latlngbounds = new google.maps.LatLngBounds( );
+	map = new google.maps.Map(document.getElementById(mapDiv), mapOptions);
+	var latlngbounds = new google.maps.LatLngBounds( );
 	
-	$("#latbox").append(
+	$("#latpanel").append(
 		'<div class="item">'+
 			'<span id="status">&nbsp;</span>'+
 			'<br/>'+
@@ -105,45 +119,45 @@ function setupMap() {
 			'<input type="checkbox" id="autofit" /> auto-fit map'+
 		'</div>'
 	);
-	
-	
-	$.ajax({
-		url: baseUrl+'/services/app/app01/agents?callback=?',
-		dataType: 'jsonp'
-	}).done(function ( data ) {
-
-		$.each( data.agents, function( index, agent ) {
-
-			markerArray[agent._id] = new google.maps.Marker({
-				position: new google.maps.LatLng(agent.loc[1], agent.loc[0]),
-				map: map,
-				title: agent.username+' - '+agent.name,
-				icon: 'http://geomess.peerates.org/'+agent.icon
-			});
-			
-			latlngbounds.extend(markerArray[agent._id].getPosition());
-			
-			$("#latbox").append(
-				'<div class="item" id="item_'+agent._id+'">'+
-					'<input type="radio" name="follow" value="'+ agent._id +'"/> <b>'+agent.username+' - '+agent.name+'</b><br/>'+
-					'<span id="lat_'+agent._id+'">'+agent.loc[0]+'</span> '+
-					'| <span id="lon_'+agent._id+'">'+agent.loc[1]+'</span> '+
-					'<br/>'+
-				'</div>'
-			);
-
+		
+	for(var idx in agents){
+		var agent = agents[idx];
+		
+		var agentIcon = geomess.getMarkerIcon(agent.type);
+		var marker = new google.maps.Marker({
+			position: new google.maps.LatLng(agent.loc[1], agent.loc[0]),
+			map: map,
+			title: agent.name,
+			icon: agentIcon
 		});
+		
+		latlngbounds.extend(marker.getPosition());
+		
+		$("#latpanel").append(
+			'<div class="item" id="item_'+idx+'">'+
+				'<input type="radio" name="follow" value="'+ idx +'"/> <b>'+agent.name+'</b>'+
+				' | <span id=\"status_'+idx+'\">'+agent.status+'</span><br/>'+
+				'<span id="lat_'+idx+'">'+roundNumber(agent.loc[0], 6)+'</span> '+
+				'| <span id="lon_'+idx+'">'+roundNumber(agent.loc[1], 6)+'</span> '+
+				'<br/>'+
+			'</div>'
+		);
+
+		geomess.setMarker(idx, marker);
+	}
 	
-		map.fitBounds( latlngbounds );
-		
-		for(key in markerArray) {
-			triggerInfoWindow(markerArray[key]);
-		}
-		
-	});
+	map.fitBounds( latlngbounds );
+	
+	for(var idx in agents){
+		triggerInfoWindow( geomess.getMarker(idx) );
+	}
 
-
-
+	$("#"+mapDiv).css({"visibility":"visible"});
+	$("#toppanel").css({"visibility":"visible"});
+	
+	$("#loading").css({"display":"none"});
+	
+	$("div#latpanel").animate({right: "5px"}, "slow");
 }
 
 function triggerInfoWindow(marker){
