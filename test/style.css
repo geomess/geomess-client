@@ -3,6 +3,7 @@ html, body, #map_canvas {
 	padding: 0;
 	height: 100%;
 	background-color: #B3F1C3;
+	overflow: hidden;
 }
 
 .transparent {
@@ -63,6 +64,10 @@ html, body, #map_canvas {
 /*
  * login panel, from http://net.tutsplus.com/tutorials/javascript-ajax/build-a-top-panel-with-jquery/
  */
+.centered {
+	margin: auto;
+	text-align:center;
+}
 .panel_button {
 	margin-left: auto;
 	margin-right: auto;

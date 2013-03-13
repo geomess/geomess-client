@@ -1,12 +1,15 @@
 var autoFitEvery=5;
 var autoFitCount=0;
+var animateLocks = {};
+
+var appalias="app01";
 
 var map;
-
 var geomess;
 
 $(document).ready(function() {
-	
+		
+		//login top slider
 		$("div.panel_button").click(function(){
 			$("div#panel").animate({ height: "500px" }).animate({height: "400px"}, "fast");
 			$("div.panel_button").toggle();
@@ -22,14 +25,16 @@ $(document).ready(function() {
 		fixConsole(false);
 		
 		geomess = new GeoMessClient("http://geo.mess.jit.su");
-		geomess.setApp("app01");
+		geomess.setApp(appalias);
 				
 		geomess.on('update-position', function(message){
+			$("#item_"+message.agentid).animateHighlight();
 			moveMarker(message.agentid, message.lat, message.lng);
 			console.log('update-position', message);
 		});
 
 		geomess.on('update-status', function(message){
+			$("#item_"+message.agentid).animateHighlight();
 			updateStatus(message.agentid, message.status);
 			console.log('update-status', message);
 		});
@@ -47,14 +52,46 @@ $(document).ready(function() {
 			console.log('agents-loaded');
 		});
 	
+		//login
+		$("#login_btn").click(function() {
+			$("#login_btn").attr('disabled','disabled');
+			geomess.login(appalias, $("#username").val(), $("#password").val());
+		});
+	
+		geomess.on('login-success', function(message){
+			$("#login").html("<div class=\"centered\"><br/><br/>welcome "+message.username+"!</div>");
+			
+			//close panel
+			setTimeout(function(){
+				$("div#panel").animate({height: "0px"}, "slow");
+				$("div.panel_button").toggle();
+			}, 2000);
+
+			console.log('login-success', message);
+		});
+		
+		geomess.on('login-error', function(message){
+			$(".login_label").css("color","#ff5050");
+			$("#error_message").html("login failed!");
+			$("#password").attr('value','');
+			$("#login_btn").removeAttr('disabled');
+			console.log('login-failure', message);
+		});
+		
+		
 		google.maps.event.addDomListener(window, 'load', initialize);
 });
 
 function initialize(){
 	geomess.init();
-	geomess.loadAgentTypes();
-	geomess.loadAgents();
 	geomess.listenToApp();
+
+	geomess.loadAgentTypes();
+	
+	geomess.on('agent-types-loaded', function(){
+		geomess.loadAgents();
+	});
+	
 }
 
 function roundNumber(rnum, rlength) {
@@ -167,6 +204,23 @@ function triggerInfoWindow(marker){
 		infowindow.open(map,marker);
 	});	
 }
+
+
+$.fn.animateHighlight = function(highlightColor, duration) {
+		var myid = $(this).attr("id");
+		if(animateLocks[myid] == "executing"){
+			//already executing, do nothing...
+		}else{
+			animateLocks[myid] = "executing";
+			var highlightBg = highlightColor || "#ff5050";
+		    var animateMs = duration || 2000;
+		    var originalBg = this.css("backgroundColor");
+		    this.stop().css("background-color", highlightBg).animate({backgroundColor: originalBg}, animateMs, function() {
+		        // Animation complete.
+			    delete animateLocks[myid];
+		    });
+		}
+};
 
 /*
  * internet explorer IS SHIT
