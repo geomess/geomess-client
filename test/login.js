@@ -1,4 +1,4 @@
-var nodeUrl = "http://geo.mess.jit.su";
+var nodeUrl = "http://geomess.jit.su";
 var faye;
 
 $(document).ready(function() {

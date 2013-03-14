@@ -24,7 +24,7 @@ $(document).ready(function() {
 		
 		fixConsole(false);
 		
-		geomess = new GeoMessClient("http://geo.mess.jit.su");
+		geomess = new GeoMessClient("http://geomess.jit.su");
 		geomess.setApp(appalias);
 				
 		geomess.on('update-position', function(message){
@@ -59,7 +59,7 @@ $(document).ready(function() {
 		});
 	
 		geomess.on('login-success', function(message){
-			$("#login").html("<div class=\"centered\"><p><br/><br/>welcome "+message.username+"!</div></p>");
+			$("#login").html("<div class=\"centered\"><p><br/><br/>welcome "+message.username+"!</p></div>");
 			
 			//close panel
 			setTimeout(function(){

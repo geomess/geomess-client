@@ -4,7 +4,7 @@ $(document).ready(function() {
 	
 	fixConsole(false);
 	
-	geomess = new GeoMessClient("http://geo.mess.jit.su");
+	geomess = new GeoMessClient("http://geomess.jit.su");
 
 	geomess.on('init', function(){
 		console.log('init');
