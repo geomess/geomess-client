@@ -107,6 +107,50 @@ GeoMessClient.prototype.getMarker = function(agentId) {
 	return this.agents[agentId].marker;
 };
 
+GeoMessClient.prototype.setSpeed = function(agentId, speed) {
+	this.agents[agentId].speed = speed;
+};
+
+GeoMessClient.prototype.getOrCreatePolyline = function(map, agentId) {
+	
+	if(this.agents[agentId].polyline==null){
+
+	    var polyOptions = {
+	            strokeColor: '#000000',
+	            strokeOpacity: 1.0,
+	            strokeWeight: 3
+	    };
+	    
+	    poly = new google.maps.Polyline(polyOptions);
+	    poly.setMap(map);
+	    this.agents[agentId].polyline = poly;
+	}
+    
+	return this.agents[agentId].polyline;
+};
+
+
+GeoMessClient.prototype.triggerInfoWindow = function(map, agentId) {
+	var self = this;
+	var marker = this.agents[agentId].marker;
+	
+	var infoWindow = new google.maps.InfoWindow({content: marker.title});
+	
+	this.agents[agentId].infoWindow = infoWindow;
+
+	google.maps.event.addListener(marker, 'click', function() {
+		var agent = self.agents[marker.idx];
+		infoWindow.setContent(
+				'<img src="'+marker.icon+'"/>'+
+				'<b>'+agent.name+'</b><br/>'+
+				(agent.status != undefined ? 'status: '+agent.status+'<br/>' : '')+
+				(agent.speed != undefined ? 'speed: '+agent.speed+'<br/>' : '')
+		);
+		infoWindow.open(map, marker);
+	});	
+};
+
+
 GeoMessClient.prototype.setMarker = function(agentId, marker) {
 	this.agents[agentId].marker = marker;
 };
