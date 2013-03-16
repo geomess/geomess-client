@@ -182,8 +182,8 @@ function setupMap(mapDiv, agents) {
 		$("#latpanel").append(
 			'<div class="item" id="item_'+idx+'">'+
 				'<input type="radio" name="follow" value="'+ idx +'"/> <b>'+agent.name+'</b>'+
-				' | <span id=\"status_'+idx+'\">'+agent.status+'</span><br/>'+
-				'<span id="speed_'+idx+'"></span> '+
+				' | <span id=\"status_'+idx+'\">'+agent.status+'</span>'+
+				' | <span id="speed_'+idx+'"></span> '+
 				'<br/>'+
 			'</div>'
 		);
