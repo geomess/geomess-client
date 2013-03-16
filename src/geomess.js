@@ -73,6 +73,14 @@ GeoMessClient.prototype.initListeners = function() {
 		self.emit('agent-types-loaded');
 	});
 	
+	self.on('new-agent', function(message){
+
+		var check = self.getAgent(message.agent._id);
+		if(check==null){
+			self.agents[message.agent._id] = message.agent;
+		}
+		self.emit('new-agent-loaded', message.agent._id);
+	});
 };
 
 GeoMessClient.prototype.initFayeClient = function() {
@@ -96,7 +104,7 @@ GeoMessClient.prototype.initRandomSession = function() {
 };
 
 GeoMessClient.prototype.getAgent = function(agentId) {
-	return this.agents[agentid];
+	return this.agents[agentId];
 };
 
 GeoMessClient.prototype.getAgents = function() {

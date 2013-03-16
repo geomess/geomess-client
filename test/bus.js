@@ -1,6 +1,6 @@
 var animateLocks = {};
 var trailLenght = 30;
-var appalias="app01";
+var appalias="sfbus";
 
 var map;
 var geomess;
@@ -35,11 +35,11 @@ $(document).ready(function() {
 			console.log('update-position', message);
 		});
 
-		geomess.on('update-status', function(message){
-			$("#item_"+message.agentid).animateHighlight();
-			updateStatus(message.agentid, message.status);
-			console.log('update-status', message);
-		});
+//		geomess.on('update-status', function(message){
+//			$("#item_"+message.agentid).animateHighlight();
+//			updateStatus(message.agentid, message.status);
+//			console.log('update-status', message);
+//		});
 		
 		
 		geomess.on('app-subscription-active', function(){
@@ -53,7 +53,17 @@ $(document).ready(function() {
 			
 			console.log('agents-loaded');
 		});
-	
+		
+		geomess.on('new-agent-loaded', function(idx){
+			
+			var agent = geomess.getAgent(idx);
+			processAgent(map, agent, idx, null);
+			
+			console.log('new-agent-loaded');
+		});
+		
+		
+		
 		//login
 		$("#login_btn").click(function() {
 			$("#login_btn").attr('disabled','disabled');
@@ -147,6 +157,35 @@ function moveMarker(id, latval, lngval, speed){
 		
 }
 
+function processAgent(map, agent, idx, latlngbounds){
+	var agentIcon = geomess.getMarkerIcon(agent.type);
+	var marker = new google.maps.Marker({
+		position: new google.maps.LatLng(agent.loc[1], agent.loc[0]),
+		map: map,
+		title: agent.name,
+		icon: agentIcon
+	});
+	
+	marker.idx = idx;
+	
+	if(latlngbounds!=null)
+		latlngbounds.extend(marker.getPosition());
+	
+	updatePolyline(idx, marker.getPosition());
+	
+	$("#latpanel").append(
+		'<div class="item" id="item_'+idx+'">'+
+			'<b>'+agent.name+'</b> <span style="display:none;" id="speed_'+idx+'"></span>'+
+			'<br/>'+
+		'</div>'
+	);
+
+	geomess.setMarker(idx, marker);
+	
+	geomess.triggerInfoWindow(map, idx);
+
+}
+
 function setupMap(mapDiv, agents) {
 	var mapOptions = {
 		zoom: 0,
@@ -158,51 +197,19 @@ function setupMap(mapDiv, agents) {
 	var latlngbounds = new google.maps.LatLngBounds( );
 	
 	$("#latpanel").append(
-		'<div class="item">'+
-			'<span id="status">&nbsp;</span>'+
-			'<br/>'+
-			'<input type="radio" name="follow" value=""/> follow nobody<br/>'+
+		'<div class="item" style="display:block;">'+
+			'<span id="status" style="display:none;">&nbsp;</span>'+
 			'<input type="checkbox" id="autofit" /> auto-fit map'+
 		'</div>'
 	);
 		
 	for(var idx in agents){
 		var agent = agents[idx];
-		
-		var agentIcon = geomess.getMarkerIcon(agent.type);
-		var marker = new google.maps.Marker({
-			position: new google.maps.LatLng(agent.loc[1], agent.loc[0]),
-			map: map,
-			title: agent.name,
-			icon: agentIcon
-		});
-		
-		marker.idx = idx;
-		
-		latlngbounds.extend(marker.getPosition());
-		
-		updatePolyline(idx, marker.getPosition());
-		
-		$("#latpanel").append(
-			'<div class="item" id="item_'+idx+'">'+
-				'<input type="radio" name="follow" value="'+ idx +'"/> <b>'+agent.name+'</b>'+
-				' | <span id=\"status_'+idx+'\">'+agent.status+'</span>'+
-				' | <span id="speed_'+idx+'"></span> '+
-				'<br/>'+
-			'</div>'
-		);
-
-		geomess.setMarker(idx, marker);
-		
-		geomess.triggerInfoWindow(map, idx);
+		processAgent(map, agent, idx, latlngbounds);
 	}
 	
 	map.fitBounds( latlngbounds );
 	
-//	for(var idx in agents){
-//		triggerInfoWindow( geomess.getMarker(idx) );
-//	}
-
 	$("#"+mapDiv).css({"visibility":"visible"});
 	$("#toppanel").css({"visibility":"visible"});
 	
